@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portaria - Controle de Acesso Nuvem</title>
+    <title>Controle de Acesso</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -12,22 +12,25 @@
     <style>
         :root { --primary: #2c3e50; --secondary: #3498db; --success: #2ecc71; --danger: #e74c3c; --warning: #f39c12; --light: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--light); margin: 0; padding: 10px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .tela { display: none; }
         .tela.ativa { display: block; }
         .login-box { text-align: center; padding: 40px 10px; }
         .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 15px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; margin: 20px auto; gap: 10px; }
-        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 10px; }
+        .btn { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 10px; transition: 0.3s; }
         .btn-novo { background: var(--success); color: white; font-size: 1.1rem; }
         .btn-entrada { background: var(--secondary); color: white; margin-top: 10px; }
         .btn-logout { background: transparent; color: var(--danger); border: 1px solid var(--danger); width: auto; float: right; padding: 5px 10px; font-size: 12px; }
         input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
-        .historico-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; }
+        .historico-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #eee; margin-bottom: 8px; border-radius: 8px; background: #fff; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
         th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
         th { background: var(--primary); color: white; }
-        .btn-acao { padding: 5px 8px; border-radius: 4px; color: white; border: none; cursor: pointer; font-size: 12px; }
-        @media print { .no-print { display: none !important; } }
+        .btn-acao { padding: 6px 10px; border-radius: 4px; color: white; border: none; cursor: pointer; font-size: 11px; margin-right: 3px; font-weight: bold; }
+        .bg-edit { background: var(--warning); }
+        .bg-del { background: var(--danger); }
+        .bg-out { background: var(--success); }
+        @media print { .no-print { display: none !important; } .container { box-shadow: none; width: 100%; padding: 0; } }
     </style>
 </head>
 <body>
@@ -35,8 +38,8 @@
 <div class="container">
     <div id="telaLogin" class="tela ativa">
         <div class="login-box">
-            <h1>Portaria PDC</h1>
-            <p>Sistema de Controle de Acesso (Nuvem)</p>
+            <h1>Controle de Acesso</h1>
+            <p>Gerenciamento de Segurança Privada</p>
             <button class="btn-google" onclick="loginGoogle()">
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Entrar com Google
             </button>
@@ -44,22 +47,22 @@
     </div>
 
     <div id="telaHome" class="tela">
-        <button class="btn-logout" onclick="logout()">Sair</button>
+        <button class="btn-logout no-print" onclick="logout()">Sair</button>
         <h2 id="msgBoasVindas">Olá!</h2>
-        <button class="btn btn-novo" onclick="iniciarNovoControle()">+ Iniciar Relatório do Dia</button>
+        <button class="btn btn-novo" onclick="iniciarNovoControle()">iniciar novo controle de acesso</button>
         <hr>
-        <h3>Relatórios Anteriores</h3>
-        <div id="listaHistorico">Carregando...</div>
+        <h3>Registros anteriores</h3>
+        <div id="listaHistorico">Carregando registros...</div>
     </div>
 
     <div id="telaApp" class="tela">
         <button class="btn no-print" style="background:#95a5a6; color:white; width:auto;" onclick="irParaHome()">← Voltar</button>
-        <h2 id="tituloControle">Relatório</h2>
+        <h2 id="tituloControle">Controle de acesso</h2>
         
-        <div class="no-print" style="background: #f9f9f9; padding: 15px; border-radius: 8px;">
-            <input type="text" id="placa" placeholder="Placa (Ex: ABC1D23)" style="text-transform: uppercase;">
-            <input type="text" id="motorista" placeholder="Nome do Motorista">
-            <input type="text" id="empresa" placeholder="Empresa / Motivo">
+        <div class="no-print" style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+            <input type="text" id="placa" placeholder="Placa" style="text-transform: uppercase;">
+            <input type="text" id="motorista" placeholder="Motorista">
+            <input type="text" id="empresa" placeholder="Empresa">
             <button class="btn btn-entrada" onclick="adicionarRegistro()">Registrar Entrada</button>
         </div>
 
@@ -68,9 +71,10 @@
                 <tr>
                     <th>Placa</th>
                     <th>Motorista</th>
+                    <th>Empresa</th>
                     <th>Entrada</th>
                     <th>Saída</th>
-                    <th class="no-print">Ação</th>
+                    <th class="no-print">Ações</th>
                 </tr>
             </thead>
             <tbody id="corpoTabela"></tbody>
@@ -81,7 +85,6 @@
 </div>
 
 <script>
-    // --- SUAS CHAVES DO FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyDqxpXNR0B4VfOjK4W7san9jFoX1vtI9uo",
         authDomain: "portaria-ponta-do-curral.firebaseapp.com",
@@ -91,7 +94,6 @@
         appId: "1:210558379729:web:b91dd42a772e78b24507f0"
     };
 
-    // Inicialização
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -99,11 +101,10 @@
     let usuarioLogado = null;
     let controleAtualId = null;
 
-    // --- MONITOR DE LOGIN ---
     auth.onAuthStateChanged(user => {
         if (user) {
             usuarioLogado = user;
-            document.getElementById('msgBoasVindas').innerText = "Olá, " + user.displayName;
+            document.getElementById('msgBoasVindas').innerText = "Bem-vindo, " + user.displayName;
             irParaHome();
         } else {
             mostrarTela('telaLogin');
@@ -113,15 +114,7 @@
     function loginGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
-        
-        auth.signInWithPopup(provider).catch(error => {
-            console.error("Erro no login:", error);
-            if (error.code === 'auth/unauthorized-domain') {
-                alert("ERRO: Este domínio não está autorizado no Firebase. Adicione '" + window.location.hostname + "' na lista de Domínios Autorizados.");
-            } else {
-                alert("Erro ao logar: " + error.message);
-            }
-        });
+        auth.signInWithPopup(provider).catch(err => alert("Erro: " + err.message));
     }
 
     function logout() { auth.signOut(); }
@@ -131,7 +124,6 @@
         document.getElementById(id).classList.add('ativa');
     }
 
-    // --- FUNÇÕES DO SISTEMA ---
     function irParaHome() {
         mostrarTela('telaHome');
         renderizarHistorico();
@@ -152,7 +144,7 @@
         mostrarTela('telaApp');
         db.collection("relatorios").doc(id).onSnapshot(doc => {
             if(doc.exists) {
-                document.getElementById('tituloControle').innerText = "Relatório: " + doc.data().data;
+                document.getElementById('tituloControle').innerText = "Controle de acesso: " + doc.data().data;
                 renderizarTabela(doc.data().registros);
             }
         });
@@ -188,6 +180,34 @@
         });
     }
 
+    function editarRegistro(idReg) {
+        db.collection("relatorios").doc(controleAtualId).get().then(doc => {
+            const regs = doc.data().registros;
+            const index = regs.findIndex(r => r.idReg === idReg);
+            if (index === -1) return;
+
+            const r = regs[index];
+            const nPlaca = prompt("Editar Placa:", r.placa);
+            const nMotorista = prompt("Editar Motorista:", r.motorista);
+            const nEmpresa = prompt("Editar Empresa:", r.empresa);
+            const nEntrada = prompt("Editar Hora Entrada:", r.entrada);
+            const nSaida = prompt("Editar Hora Saída:", r.saida);
+
+            if (nPlaca && nMotorista) {
+                regs[index] = { ...r, placa: nPlaca.toUpperCase(), motorista: nMotorista, empresa: nEmpresa, entrada: nEntrada, saida: nSaida };
+                db.collection("relatorios").doc(controleAtualId).update({ registros: regs });
+            }
+        });
+    }
+
+    function excluirReg(idReg) {
+        if(!confirm("Deseja realmente excluir este registro?")) return;
+        db.collection("relatorios").doc(controleAtualId).get().then(doc => {
+            const filtrados = doc.data().registros.filter(r => r.idReg !== idReg);
+            db.collection("relatorios").doc(controleAtualId).update({ registros: filtrados });
+        });
+    }
+
     function renderizarHistorico() {
         const lista = document.getElementById('listaHistorico');
         db.collection("relatorios").where("uid", "==", usuarioLogado.uid).orderBy("criadoEm", "desc").onSnapshot(snap => {
@@ -197,7 +217,7 @@
                 const d = doc.data();
                 const div = document.createElement('div');
                 div.className = 'historico-item';
-                div.innerHTML = `<span>${d.data} (${d.registros.length} vcs)</span> 
+                div.innerHTML = `<span><b>${d.data}</b> (${d.registros.length} veículos)</span> 
                                  <button class="btn-acao" style="background:var(--secondary)" onclick="abrirControle('${doc.id}')">Abrir</button>`;
                 lista.appendChild(div);
             });
@@ -209,21 +229,21 @@
         corpo.innerHTML = '';
         regs.forEach(r => {
             const btnSaida = r.saida === '--:--' ? 
-                `<button class="btn-acao no-print" style="background:var(--success)" onclick="registrarSaida(${r.idReg})">Saída</button>` : 
-                `<b style="color:red">${r.saida}</b>`;
+                `<button class="btn-acao bg-out no-print" onclick="registrarSaida(${r.idReg})">Saída</button>` : 
+                `<b style="color:var(--danger)">${r.saida}</b>`;
             
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td><b>${r.placa}</b></td><td>${r.motorista}</td><td>${r.entrada}</td><td>${btnSaida}</td>
-                            <td class="no-print"><button class="btn-acao" style="background:var(--danger)" onclick="excluirReg(${r.idReg})">X</button></td>`;
+            tr.innerHTML = `
+                <td><b>${r.placa}</b></td>
+                <td>${r.motorista}</td>
+                <td>${r.empresa || '-'}</td>
+                <td>${r.entrada}</td>
+                <td>${btnSaida}</td>
+                <td class="no-print">
+                    <button class="btn-acao bg-edit" onclick="editarRegistro(${r.idReg})">Editar</button>
+                    <button class="btn-acao bg-del" onclick="excluirReg(${r.idReg})">Excluir</button>
+                </td>`;
             corpo.appendChild(tr);
-        });
-    }
-
-    function excluirReg(idReg) {
-        if(!confirm("Excluir?")) return;
-        db.collection("relatorios").doc(controleAtualId).get().then(doc => {
-            const filtrados = doc.data().registros.filter(r => r.idReg !== idReg);
-            db.collection("relatorios").doc(controleAtualId).update({ registros: filtrados });
         });
     }
 </script>
