@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portaria-Ponta do Curral (Nuvem)</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        :root { --primary: #2c3e50; --secondary: #3498db; --success: #2ecc71; --danger: #e74c3c; --warning: #f39c12; --light: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--light); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        .tela { display: none; }
+        .tela.ativa { display: block; }
+
+        /* Estilo Login */
+        .login-box { text-align: center; padding: 50px; }
+        .btn-google { background: white; color: #444; border: 1px solid #ddd; padding: 15px 25px; font-size: 18px; border-radius: 5px; cursor: pointer; font-weight: bold; display: flex; align-items: center; margin: 20px auto; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        .btn { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; }
+        .btn-novo { background: var(--success); color: white; width: 100%; font-size: 1.2rem; margin-bottom: 30px; }
+        .btn-voltar { background: #95a5a6; color: white; margin-bottom: 20px; }
+        .btn-imprimir { background: var(--primary); color: white; }
+        .btn-entrada { background: var(--success); color: white; width: 100%; margin-top: 15px; }
+        .btn-logout { background: transparent; color: var(--danger); border: 1px solid var(--danger); font-size: 10px; float: right; }
+
+        .btn-acao { padding: 6px 10px; font-size: 0.8rem; border: none; border-radius: 4px; color: white; cursor: pointer; margin-right: 4px; font-weight: bold; }
+        .bg-abrir { background: var(--secondary); }
+        .bg-excluir { background: var(--danger); }
+        .bg-editar { background: var(--warning); }
+        .bg-salvar { background: var(--success); }
+
+        .historico-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff; }
+        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: var(--primary); color: white; }
+        .placa-box { font-family: monospace; font-weight: bold; background: #eee; padding: 3px 6px; border-radius: 4px; }
+
+        @media print { .no-print { display: none !important; } .container { box-shadow: none; width: 100%; } h2 { text-align: center; border-bottom: 2px solid #000; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div id="telaLogin" class="tela login-box">
+        <h1>Portaria-Ponta do Curral</h1>
+        <p>Acesse com seu e-mail institucional/pessoal para sincronizar os dados.</p>
+        <button class="btn-google" onclick="loginGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20"> Entrar com Google
+        </button>
+    </div>
+
+    <div id="telaHome" class="tela">
+        <button class="btn btn-logout no-print" onclick="logout()">Sair</button>
+        <h1>Portaria-Ponta do Curral</h1>
+        <button class="btn btn-novo" onclick="iniciarNovoControle()">+ Novo Controle de Acesso</button>
+        <h2>Relatórios Salvos na Nuvem</h2>
+        <div id="listaHistorico">Carregando dados...</div>
+    </div>
+
+    <div id="telaApp" class="tela">
+        <button class="btn btn-voltar no-print" onclick="irParaHome()">← Voltar</button>
+        <div class="no-print">
+            <h2 id="tituloControle">Carregando...</h2>
+            <div class="grid-form">
+                <input type="text" id="placa" placeholder="Placa" style="text-transform: uppercase;">
+                <input type="text" id="modelo" placeholder="Modelo / Cor">
+                <input type="text" id="motorista" placeholder="Motorista">
+                <input type="text" id="empresa" placeholder="Empresa">
+            </div>
+            <button class="btn btn-entrada" onclick="adicionarRegistro()">Registrar Entrada</button>
+        </div>
+<script>
+    // CONFIGURAÇÃO DO SEU FIREBASE
+    const firebaseConfig = {
+        apiKey: "AIzaSyDqxpXNR0B4VfOjK4W7san9jFoX1vtI9uo",
+        authDomain: "portaria-ponta-do-curral.firebaseapp.com",
+        projectId: "portaria-ponta-do-curral",
+        storageBucket: "portaria-ponta-do-curral.firebasestorage.app",
+        messagingSenderId: "210558379729",
+        appId: "1:210558379729:web:b91dd42a772e78b24507f0"
+    };
+
+    // Inicialização segura
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let usuarioLogado = null;
+    let controleAtualId = null;
+
+    // --- ESCUTADOR DE LOGIN ---
+    auth.onAuthStateChanged(user => {
+        console.log("Status do usuário mudou:", user);
+        if (user) {
+            usuarioLogado = user;
+            irParaHome();
+        } else {
+            mostrarTela('telaLogin');
+        }
+    });
+
+   // --- FUNÇÃO DE LOGIN ATUALIZADA ---
+    function loginGoogle() {
+        console.log("Iniciando processo de login...");
+        const provider = new firebase.auth.GoogleAuthProvider();
+        
+        // Isso obriga o Google a mostrar a tela de escolha de conta
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
+
+        // Usaremos o Pop-up para você ver a janelinha abrindo
+        auth.signInWithPopup(provider).then((result) => {
+            console.log("Login realizado com sucesso para:", result.user.email);
+            // O próprio Firebase vai perceber a mudança e chamar o irParaHome()
+        }).catch((error) => {
+            console.error("Erro no Firebase Auth:", error.code, error.message);
+            
+            // Se der erro de domínio, ele vai avisar aqui
+            if (error.code === 'auth/unauthorized-domain') {
+                alert("Domínio não autorizado! Verifique se '" + window.location.hostname + "' está no Firebase.");
+            } else {
+                alert("Erro ao entrar: " + error.message);
+            }
+        });
+    }
