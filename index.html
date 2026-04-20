@@ -210,7 +210,7 @@
 
     function renderizarHistorico() {
         const lista = document.getElementById('listaHistorico');
-        db.collection("relatorios").where("uid", "==", usuarioLogado.uid).orderBy("criadoEm", "desc").onSnapshot(snap => {
+        db.collection("relatorios").orderBy("criadoEm", "desc").onSnapshot(snap => {
             lista.innerHTML = '';
             if(snap.empty) lista.innerHTML = '<p>Nenhum registro encontrado.</p>';
             snap.forEach(doc => {
